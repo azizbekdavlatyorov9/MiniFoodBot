@@ -119,6 +119,8 @@ export class BotService {
 
       this.showMainMenu(chatId);
     });
+
+    //ordered 
     this.bot.on("message", async (msg) => {
       const chatId = msg.chat.id;
 
@@ -135,50 +137,66 @@ export class BotService {
       }
     });
 
-    // //commands
-    // this.bot.onText(/\/commands/, (msg) => {
-    //   const chatId: number = msg.from?.id as number;
+    this.bot.on("callback_query", async (query) => {
+  const chatId = query.message!.chat.id;
+  const data = query.data;
 
-    //   this.bot.sendMessage(chatId, "Commands", {
-    //     reply_markup: {
-    //       keyboard: [
-    //         [
-    //           { text: "Location", request_location: true },
-    //           { text: "Phone number", request_contact: true },
-    //         ],
-    //       ],
-    //       resize_keyboard: true,
-    //     },
-    //   });
-    // });
+  if (data?.startsWith("order:")) {
+    const productId = data.split(":")[1];
+
+    const product = await this.ProductModel.findById(productId);
+
+    if (!product) {
+      return this.bot.answerCallbackQuery(query.id, {
+        text: "Mahsulot topilmadi.",
+      });
+    }
+
+    // Bu yerda Cart yoki Order bazasiga saqlashingiz mumkin
+
+    await this.bot.answerCallbackQuery(query.id, {
+      text: "✅ Mahsulot savatchaga qo'shildi.",
+    });
+
+    await this.bot.sendMessage(
+      chatId,
+      `🛒 ${product.name} savatchangizga qo'shildi.`
+    );
+  }
+});
+
   }
 
   //showDrinks
-  async showDrinks(chatId: number) {
-    const drinks = await this.ProductModel.find({
-      category: "drink",
-    });
+  private async showDrinks(chatId: number): Promise<void> {
+  const drinks = await this.ProductModel.find({
+    category: "drink",
+  });
 
-    for (const item of drinks) {
-      await this.bot.sendPhoto(chatId, item.image, {
-        caption:
-          `🥤 ${item.name}\n\n` +
-          `💰 ${item.price} so'm\n\n` +
-          `📝 ${item.description}`,
-
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "🛒 Buyurtma berish",
-                callback_data: `order:${item._id}`,
-              },
-            ],
-          ],
-        },
-      });
-    }
+  if (!drinks.length) {
+   this.bot.sendMessage(chatId, "🥤 Ichimliklar mavjud emas.");
   }
+
+  for (const item of drinks) {
+    await this.bot.sendPhoto(chatId, item.image, {
+      caption:
+        `🥤 ${item.name}\n\n` +
+        `💰 Narxi: ${item.price.toLocaleString()} so'm\n\n` +
+        `📝 Tarkibi:\n${item.description}`,
+
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "🛒 Buyurtma berish",
+              callback_data: `order:${item._id}`,
+            },
+          ],
+        ],
+      },
+    });
+  }
+}
 
   // showFoods
   private async showFoods(chatId: number): Promise<void> {
