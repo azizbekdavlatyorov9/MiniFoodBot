@@ -1,20 +1,37 @@
 import { Module } from "@nestjs/common";
-import { MongooseModule } from "@nestjs/mongoose";
-import { User, UserSchema } from "./schema/bot.schema";
+import { TypeOrmModule } from "@nestjs/typeorm";
+
 import { BotService } from "./bot.service";
-import { Product, ProductSchema } from "src/product/schema/product.schema";
+import { BotController } from "./bot.controller";
+
+import { User } from "./entities/bot.entity";
+import { Product } from "../product/entities/product.entity";
+import { CartModule } from "../cart/cart.module";
+import { OrderModule } from "src/order/order.module";
+import { PaymentModule } from "src/payment/payment.module";
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: User.name,
-        schema: UserSchema },
-      {
-        name: Product.name,
-        schema: ProductSchema,
-      },
+    TypeOrmModule.forFeature([
+      User,
+      Product,
     ]),
+
+    CartModule,
+    OrderModule,
+    PaymentModule
   ],
-  providers: [BotService],
+
+  controllers: [
+    BotController,
+  ],
+
+  providers: [
+    BotService,
+  ],
+
+  exports: [
+    BotService,
+  ],
 })
 export class BotModule {}
