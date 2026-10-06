@@ -1367,7 +1367,9 @@ export class BotService {
         }
 
         if (data === "noop") {
-          await this.bot.answerCallbackQuery(query.id);
+          await this.bot.answerCallbackQuery(query.id, {
+            text:"⏳ Amal bajarilmoqda...",
+          });
 
           return;
         }
